@@ -8,6 +8,7 @@ class CustomerCard extends StatelessWidget {
   final VoidCallback onTap;
   final Function(int) onCallCountChanged;
   final Function(String, String?) onStatusChanged;
+  final bool isReadOnly;
 
   const CustomerCard({
     Key? key,
@@ -15,6 +16,7 @@ class CustomerCard extends StatelessWidget {
     required this.onTap,
     required this.onCallCountChanged,
     required this.onStatusChanged,
+    this.isReadOnly = false,
   }) : super(key: key);
 
   Color _getStatusColor(String status) {
@@ -36,217 +38,296 @@ class CustomerCard extends StatelessWidget {
     }
   }
 
+  Color _getCardBackgroundColor() {
+    final colorState = customer.getColorState();
+    
+    switch (colorState) {
+      case CustomerColorState.red:
+        return const Color(0xFFFFEBEE); // Light red
+      case CustomerColorState.yellow:
+        return const Color(0xFFFFF9C4); // Light yellow
+      case CustomerColorState.green:
+        return const Color(0xFFE8F5E9); // Light green
+      case CustomerColorState.oliveGreen:
+        return const Color(0xFFF1F8E9); // Light olive
+      case CustomerColorState.normal:
+        return Colors.white;
+    }
+  }
+
+  Color _getCardBorderColor() {
+    final colorState = customer.getColorState();
+    
+    switch (colorState) {
+      case CustomerColorState.red:
+        return const Color(0xFFE57373);
+      case CustomerColorState.yellow:
+        return const Color(0xFFFFD54F);
+      case CustomerColorState.green:
+        return const Color(0xFF81C784);
+      case CustomerColorState.oliveGreen:
+        return const Color(0xFF9CCC65);
+      case CustomerColorState.normal:
+        return const Color(0xFFE0E0E0);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final timeFormat = DateFormat('HH:mm');
     
-    return CustomCard(
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  customer.name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF212121),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(customer.status).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  customer.status,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _getStatusColor(customer.status),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: _getCardBackgroundColor(),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _getCardBorderColor(), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
-          const SizedBox(height: 8),
-          Text(
-            customer.address,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF616161),
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(Icons.location_on, size: 14, color: Color(0xFF757575)),
-              const SizedBox(width: 4),
-              Text(
-                customer.area,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF757575),
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Icon(Icons.phone, size: 14, color: Color(0xFF757575)),
-              const SizedBox(width: 4),
-              Text(
-                customer.phone,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF757575),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  if (customer.callCount > 0) {
-                    onCallCountChanged(customer.callCount - 1);
-                  }
-                },
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(
-                    Icons.remove,
-                    size: 18,
-                    color: Color(0xFF757575),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                children: [
-                  Text(
-                    '${customer.callCount}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF212121),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        customer.name,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF212121),
+                        ),
+                      ),
                     ),
-                  ),
-                  const Text(
-                    'calls',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Color(0xFF757575),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () {
-                  onCallCountChanged(customer.callCount + 1);
-                },
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2196F3),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(
-                    Icons.add,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              if (customer.lastCallTime != null)
-                Text(
-                  'Last: ${timeFormat.format(customer.lastCallTime!)}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF757575),
-                  ),
-                ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => _showStatusDialog(context),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Row(
-                    children: [
-                      Text(
-                        'Status',
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(customer.status).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        customer.status,
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF1976D2),
+                          fontSize: 11,
+                          color: _getStatusColor(customer.status),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(width: 4),
-                      Icon(
-                        Icons.arrow_drop_down,
-                        size: 18,
-                        color: Color(0xFF1976D2),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  customer.address,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF616161),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 14, color: Color(0xFF757575)),
+                    const SizedBox(width: 4),
+                    Text(
+                      customer.area,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF757575),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.phone, size: 14, color: Color(0xFF757575)),
+                    const SizedBox(width: 4),
+                    Text(
+                      customer.phone,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF757575),
+                      ),
+                    ),
+                  ],
+                ),
+                if (!isReadOnly) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          if (customer.callCount > 0) {
+                            onCallCountChanged(customer.callCount - 1);
+                          }
+                        },
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F5F5),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.remove,
+                            size: 18,
+                            color: Color(0xFF757575),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        children: [
+                          Text(
+                            '${customer.callCount}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF212121),
+                            ),
+                          ),
+                          const Text(
+                            'calls',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF757575),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: () {
+                          onCallCountChanged(customer.callCount + 1);
+                        },
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2196F3),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      if (customer.lastCallTime != null)
+                        Text(
+                          'Last: ${timeFormat.format(customer.lastCallTime!)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF757575),
+                          ),
+                        ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => _showStatusDialog(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE3F2FD),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            children: [
+                              Text(
+                                'Status',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF1976D2),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                size: 18,
+                                color: Color(0xFF1976D2),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ),
-            ],
-          ),
-          if (customer.notes != null && customer.notes!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF9C4),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.note,
-                    size: 14,
-                    color: Color(0xFFF57F17),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      customer.notes!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFF57F17),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                ],
+                if (customer.notes != null && customer.notes!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF9C4),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.note,
+                          size: 14,
+                          color: Color(0xFFF57F17),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            customer.notes!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFF57F17),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
-              ),
+                if (customer.lastEditedAt != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.edit, size: 12, color: Color(0xFF9E9E9E)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Edited ${DateFormat('MMM d, HH:mm').format(customer.lastEditedAt!)}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF9E9E9E),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
             ),
-          ],
-        ],
+          ),
+        ),
       ),
     );
   }
 
   void _showStatusDialog(BuildContext context) {
+    if (isReadOnly) return;
+    
     final statuses = [
       'Pending',
       'Confirmed (will accept)',
@@ -338,9 +419,9 @@ class CustomerCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Add Notes (Optional)',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF212121),

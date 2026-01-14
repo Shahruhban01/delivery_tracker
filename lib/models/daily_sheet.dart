@@ -1,11 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum SheetType { runsheet, pickup }
+enum SheetStatus { active, closed }
+
 class DailySheet {
   final String id;
   final String userId;
   final DateTime date;
   final String area;
-  final int totalCustomers;
+  final SheetType type;
+  final SheetStatus status;
+  final DateTime? closedAt;
+  int totalCustomers;
   int picked;
   int delivered;
   int failed;
@@ -22,6 +28,9 @@ class DailySheet {
     required this.userId,
     required this.date,
     required this.area,
+    this.type = SheetType.runsheet,
+    this.status = SheetStatus.active,
+    this.closedAt,
     this.totalCustomers = 0,
     this.picked = 0,
     this.delivered = 0,
@@ -42,6 +51,15 @@ class DailySheet {
       userId: data['userId'] ?? '',
       date: (data['date'] as Timestamp).toDate(),
       area: data['area'] ?? '',
+      type: SheetType.values.firstWhere(
+        (e) => e.name == data['type'],
+        orElse: () => SheetType.runsheet,
+      ),
+      status: SheetStatus.values.firstWhere(
+        (e) => e.name == data['status'],
+        orElse: () => SheetStatus.active,
+      ),
+      closedAt: data['closedAt'] != null ? (data['closedAt'] as Timestamp).toDate() : null,
       totalCustomers: data['totalCustomers'] ?? 0,
       picked: data['picked'] ?? 0,
       delivered: data['delivered'] ?? 0,
@@ -61,6 +79,9 @@ class DailySheet {
       'userId': userId,
       'date': Timestamp.fromDate(date),
       'area': area,
+      'type': type.name,
+      'status': status.name,
+      'closedAt': closedAt != null ? Timestamp.fromDate(closedAt!) : null,
       'totalCustomers': totalCustomers,
       'picked': picked,
       'delivered': delivered,
@@ -74,4 +95,10 @@ class DailySheet {
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
+
+  bool get isCompleted {
+    return totalCustomers > 0 && (delivered + failed) >= totalCustomers;
+  }
+
+  bool get isClosed => status == SheetStatus.closed;
 }

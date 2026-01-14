@@ -1,3 +1,4 @@
+import 'package:delivery_tracker/screens/analytics/comprehensive_aalytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
@@ -6,11 +7,13 @@ import '../../models/daily_sheet.dart';
 import '../../widgets/day_card.dart';
 import '../../widgets/custom_pull_to_refresh.dart';
 import '../../widgets/custom_refresh_button.dart';
+import '../../widgets/custom_drop_up.dart';
 import '../json_input/json_input_screen.dart';
 import '../day_details/day_details_screen.dart';
 import '../analytics/delivery_analytics_screen.dart';
 import '../analytics/returns_analytics_screen.dart';
 import '../analytics/fuel_analytics_screen.dart';
+import '../settings/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -33,6 +36,49 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _isRefreshing = false;
       });
+    }
+  }
+
+  void _showDropUp() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.25),
+      builder: (dialogContext) => CustomDropUp(
+        onRunsheetTap: () {
+          Navigator.of(dialogContext).pop(); // close drop-up
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const JsonInputScreen(type: SheetType.runsheet),
+            ),
+          );
+        },
+        onPickupTap: () {
+          Navigator.of(dialogContext).pop(); // close drop-up
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const JsonInputScreen(type: SheetType.pickup),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _closeSheet(DailySheet sheet) async {
+    final auth = context.read<AuthService>();
+    final firestoreService = FirestoreService(auth.currentUser!.uid);
+
+    await firestoreService.closeSheet(sheet.id, sheet.type);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${sheet.type.name.toUpperCase()} closed successfully'),
+          backgroundColor: const Color(0xFF4CAF50),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -65,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Daily sheets',
+                          'Runsheets & Pickups',
                           style: TextStyle(
                             fontSize: 13,
                             color: Color(0xFF757575),
@@ -99,12 +145,13 @@ class _HomeScreenState extends State<HomeScreen> {
               child: CustomPullToRefresh(
                 onRefresh: _handleRefresh,
                 child: StreamBuilder<List<DailySheet>>(
-                  stream: firestoreService.getDailySheets(),
+                  stream: firestoreService.getAllSheets(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
                         ),
                       );
                     }
@@ -121,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 16),
                             const Text(
-                              'No daily sheets yet',
+                              'No sheets yet',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Color(0xFF757575),
@@ -137,14 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 24),
                             GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const JsonInputScreen(),
-                                  ),
-                                );
-                              },
+                              onTap: _showDropUp,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 24,
@@ -155,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text(
-                                  'Add First Day',
+                                  'Add First Sheet',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -180,10 +220,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => DayDetailsScreen(sheet: sheet),
+                                builder: (context) =>
+                                    DayDetailsScreen(sheet: sheet),
                               ),
                             );
                           },
+                          onClose: sheet.isCompleted && !sheet.isClosed
+                              ? () => _closeSheet(sheet)
+                              : null,
                         );
                       },
                     );
@@ -195,14 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const JsonInputScreen(),
-            ),
-          );
-        },
+        onTap: _showDropUp,
         child: Container(
           width: 56,
           height: 56,
@@ -279,6 +316,20 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             _buildMenuItem(
               context,
+              'Comprehensive Analytics',
+              Icons.pie_chart,
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ComprehensiveAnalyticsScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildMenuItem(
+              context,
               'Fuel Analytics',
               Icons.local_gas_station,
               () {
@@ -287,6 +338,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const FuelAnalyticsScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildMenuItem(
+              context,
+              'Settings',
+              Icons.settings,
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
                   ),
                 );
               },
@@ -324,14 +389,18 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               icon,
               size: 24,
-              color: isDestructive ? const Color(0xFFF44336) : const Color(0xFF757575),
+              color: isDestructive
+                  ? const Color(0xFFF44336)
+                  : const Color(0xFF757575),
             ),
             const SizedBox(width: 16),
             Text(
               title,
               style: TextStyle(
                 fontSize: 16,
-                color: isDestructive ? const Color(0xFFF44336) : const Color(0xFF212121),
+                color: isDestructive
+                    ? const Color(0xFFF44336)
+                    : const Color(0xFF212121),
               ),
             ),
           ],

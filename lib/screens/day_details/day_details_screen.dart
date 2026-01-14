@@ -79,7 +79,7 @@ class _DayDetailsScreenState extends State<DayDetailsScreen> {
   }
 
   Future<void> _updateDailyMetrics(FirestoreService service) async {
-    await service.updateDailySheet(widget.sheet.id, {
+    await service.updateSheet(widget.sheet.id, widget.sheet.type, {
       'earnings': double.tryParse(_earningsController.text) ?? 0.0,
       'petrol': double.tryParse(_petrolController.text) ?? 0.0,
       'picked': int.tryParse(_pickedController.text) ?? 0,
@@ -319,99 +319,106 @@ class _DayDetailsScreenState extends State<DayDetailsScreen> {
               child: StreamBuilder<List<Customer>>(
                 stream: firestoreService.getCustomersByDay(widget.sheet.id),
                 builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
-                    ),
-                  );
-                }
-
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No customers found',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF757575),
-                      ),
-                    ),
-                  );
-                }
-
-                final filteredCustomers = _filterCustomers(snapshot.data!);
-
-                if (filteredCustomers.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No matching customers',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF757575),
-                      ),
-                    ),
-                  );
-                }
-
-                return DraggableCustomerList(
-                  customers: filteredCustomers,
-                  onCustomerTap: (customer) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            CustomerDetailScreen(customer: customer),
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
                       ),
                     );
-                  },
-                  onCallCountChanged: (customer, count) async {
-                    await firestoreService.updateCustomer(customer.id, {
-                      'callCount': count,
-                      'lastCallTime': DateTime.now(),
-                    });
+                  }
 
-                    await firestoreService.createCallLog(
-                      CallLog(
-                        id: '',
-                        customerId: customer.id,
-                        dayId: customer.dayId,
-                        attemptNumber: count,
-                        timestamp: DateTime.now(),
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No customers found',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF757575),
+                        ),
                       ),
                     );
-                  },
-                  onStatusChanged: (customer, status, notes) async {
-                    final oldStatus = customer.status;
+                  }
 
-                    await firestoreService.updateCustomer(customer.id, {
-                      'status': status,
-                      if (notes != null) 'notes': notes,
-                    });
+                  final filteredCustomers = _filterCustomers(snapshot.data!);
 
-                    await firestoreService.createStatusChange(
-                      StatusChange(
-                        id: '',
-                        customerId: customer.id,
-                        dayId: customer.dayId,
+                  if (filteredCustomers.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No matching customers',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF757575),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return DraggableCustomerList(
+                    customers: filteredCustomers,
+                    onCustomerTap: (customer) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CustomerDetailScreen(customer: customer),
+                        ),
+                      );
+                    },
+                    onCallCountChanged: (customer, count) async {
+                      await firestoreService.updateCustomer(customer.id, {
+                        'callCount': count,
+                        'lastCallTime': DateTime.now(),
+                      });
+
+                      await firestoreService.createCallLog(
+                        CallLog(
+                          id: '',
+                          customerId: customer.id,
+                          dayId: customer.dayId,
+                          attemptNumber: count,
+                          timestamp: DateTime.now(),
+                        ),
+                      );
+                    },
+                    onStatusChanged: (customer, status, notes) async {
+                      final oldStatus = customer.status;
+
+                      await firestoreService.updateCustomer(customer.id, {
+                        'status': status,
+                        if (notes != null) 'notes': notes,
+                      });
+
+                      await firestoreService.createStatusChange(
+                        StatusChange(
+                          id: '',
+                          customerId: customer.id,
+                          dayId: customer.dayId,
+                          oldStatus: oldStatus,
+                          newStatus: status,
+                          notes: notes,
+                          timestamp: DateTime.now(),
+                        ),
+                      );
+
+                      // Update counts AND earnings
+                      await firestoreService.updateSheetCountsAndEarnings(
+                        sheet: widget.sheet,
                         oldStatus: oldStatus,
                         newStatus: status,
-                        notes: notes,
-                        timestamp: DateTime.now(),
-                      ),
-                    );
-                  },
-                  onReorder: (reorderedCustomers) async {
-                    for (var i = 0; i < reorderedCustomers.length; i++) {
-                      await firestoreService.updateCustomerOrder(
-                        reorderedCustomers[i].id,
-                        i,
                       );
-                    }
-                  },
-                );
-              },
-            ),
+                    },
+                    onReorder: (reorderedCustomers) async {
+                      for (var i = 0; i < reorderedCustomers.length; i++) {
+                        await firestoreService.updateCustomerOrder(
+                          reorderedCustomers[i].id,
+                          i,
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ],

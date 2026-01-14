@@ -1,3 +1,4 @@
+import 'package:delivery_tracker/widgets/customer_edit_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -11,7 +12,8 @@ import '../../widgets/custom_card.dart';
 class CustomerDetailScreen extends StatelessWidget {
   final Customer customer;
 
-  const CustomerDetailScreen({Key? key, required this.customer}) : super(key: key);
+  const CustomerDetailScreen({Key? key, required this.customer})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,49 @@ class CustomerDetailScreen extends StatelessWidget {
             color: Color(0xFF212121),
           ),
         ),
+        // In the AppBar actions
+        actions: [
+          if (!customer.sheetType
+              .contains('closed')) // Check if sheet is not closed
+            GestureDetector(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => CustomerEditDialog(
+                    customer: customer,
+                    onSave: (name, phone, address, area) async {
+                      await firestoreService.editCustomerDetails(
+                        customer.id,
+                        name: name,
+                        phone: phone,
+                        address: address,
+                        area: area,
+                      );
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Customer details updated'),
+                            backgroundColor: Color(0xFF4CAF50),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.all(8),
+                child: const Icon(
+                  Icons.edit,
+                  color: Color(0xFF757575),
+                  size: 22,
+                ),
+              ),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -69,7 +114,8 @@ class CustomerDetailScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildInfoRow(
                       'Last Call',
-                      DateFormat('MMM d, yyyy - HH:mm').format(customer.lastCallTime!),
+                      DateFormat('MMM d, yyyy - HH:mm')
+                          .format(customer.lastCallTime!),
                     ),
                   ],
                   if (customer.notes != null && customer.notes!.isNotEmpty) ...[
@@ -98,7 +144,8 @@ class CustomerDetailScreen extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.all(24),
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
                       ),
                     ),
                   );
@@ -129,7 +176,8 @@ class CustomerDetailScreen extends StatelessWidget {
                 return Column(
                   children: snapshot.data!.map((log) {
                     return CustomCard(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
                       padding: const EdgeInsets.all(12),
                       child: Row(
                         children: [
@@ -166,7 +214,8 @@ class CustomerDetailScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  DateFormat('MMM d, yyyy - HH:mm').format(log.timestamp),
+                                  DateFormat('MMM d, yyyy - HH:mm')
+                                      .format(log.timestamp),
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF757575),
@@ -206,7 +255,8 @@ class CustomerDetailScreen extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.all(24),
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
                       ),
                     ),
                   );
@@ -237,7 +287,8 @@ class CustomerDetailScreen extends StatelessWidget {
                 return Column(
                   children: snapshot.data!.map((change) {
                     return CustomCard(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
                       padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,13 +340,15 @@ class CustomerDetailScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            DateFormat('MMM d, yyyy - HH:mm').format(change.timestamp),
+                            DateFormat('MMM d, yyyy - HH:mm')
+                                .format(change.timestamp),
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF757575),
                             ),
                           ),
-                          if (change.notes != null && change.notes!.isNotEmpty) ...[
+                          if (change.notes != null &&
+                              change.notes!.isNotEmpty) ...[
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.all(8),
