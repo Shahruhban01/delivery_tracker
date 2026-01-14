@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "845553516025",
+    "project_id": "carryon-delivery-tracker",
+    "storage_bucket": "carryon-delivery-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:845553516025:android:2f3098343ea510e04ed128",
+        "android_client_info": {
+          "package_name": "com.developerruhban.carryon"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "845553516025-quhls1na77g0ff4m3i7o877vg3gfjn4d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.developerruhban.carryon",
+            "certificate_hash": "354182b84424980880b9c5ece09e6f7479f85eb0"
+          }
+        },
+        {
+          "client_id": "845553516025-f06oud60ivqq5d1lgn6fliprvqpcpava.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlt8LjWlrS-vVtzcf7c4H9QMAof1-3JI0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "845553516025-f06oud60ivqq5d1lgn6fliprvqpcpava.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "845553516025-hmqbptbd5m16elggopm35mqafenp4rkb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.developerruhban.carryon"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
